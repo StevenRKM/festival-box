@@ -1,24 +1,41 @@
 var http = require("http");
 //var url = require("url");
-var SerialPort = require("serialport").SerialPort;
+var serialport = require("serialport");
 var exec = require('child_process').exec;
 
-var arduino = new SerialPort("/dev/ttyACM1", {
-    baudrate: 9600,
-    dataBits: 8, 
-    parity: 'none', 
-    stopBits: 1, 
-    flowControl: false 
+var arduino;
+var arduinoReady = false;
+var arduinoPort = undefined;
+
+// find the arduino
+serialport.list(function (err, ports) {
+  ports.forEach(function(port) {
+	  if(!arduinoPort) {
+			arduinoPort = port.comName;
+	  }
+	//console.log(port.comName);
+	//console.log(port.pnpId);
+	//console.log(port.manufacturer);
+  });
+
+  connect(arduinoPort);
 });
 
-var arduinoReady = false;
+function connect(port) {
+	arduino = new serialport.SerialPort(port, {
+		baudrate: 9600,
+		dataBits: 8,
+		parity: 'none',
+		stopBits: 1,
+		flowControl: false
+	});
+	arduino.on("open", function(){
+		console.log('ledcube connected on '+port);
+		setTimeout(ready , 2000);
+	});
+}
 
 var count = 0;
-
-arduino.on("open", function(){
-    console.log('ledcube connected');
-    setTimeout(ready , 2000);
-});
 
 function ready() {
 	arduinoReady = true;
